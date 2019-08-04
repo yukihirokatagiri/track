@@ -78,9 +78,9 @@ class TrackingObject:
 
 		if not self.counted:
 			current_resion = Region.Middle
-			if centroid.x < config.PEOPLE_COUNT_LEFT_BORDER:
+			if centroid.x < config.PASS_COUNT_LEFT_BORDER:
 				current_resion = Region.Left
-			elif centroid.x > config.PEOPLE_COUNT_RIGHT_BORDER:
+			elif centroid.x > config.PASS_COUNT_RIGHT_BORDER:
 				current_resion = Region.Right
 
 			# state transition
@@ -104,7 +104,7 @@ class CentroidTracker():
 		# dictionaries used to keep track of mapping a given object
 		# ID to its centroid and number of consecutive frames it has
 		# been marked as "disappeared", respectively
-		self.nextObjectID = 0
+		self.nextObjectID = 1
 		self.tracking_objects = OrderedDict()
 
 		# store the number of maximum consecutive frames a given

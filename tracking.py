@@ -13,15 +13,16 @@ sys.path.insert(0, "core")
 from detection_graph import Detector
 from centroid_tracker import CentroidTracker
 from centroid_tracker import TrackingObject
-from camera import Camera
-from camera import FileStream
+from camera import *
 from tracking_view import TrackingView
 
 def get_image_stream():
 	if not config.INPUT_FILE == "":
 		stream = FileStream()
+		print("FileStream")
 	else:
 		stream = Camera()
+		print(f"Camera {config.CAMERA_ID}")
 
 	return stream
 
@@ -32,8 +33,8 @@ def quit(msg):
 def main():
 	stream = get_image_stream()
 	stream.open()
-	success, frame = stream.read()
-	if not (success or frame is None):
+	frame = stream.read()
+	if frame is None:
 		quit("Failed to load stream.")
 
 	height, width, depth = frame.shape
@@ -56,8 +57,10 @@ def main():
 	if config.VERBOSE_LOG:
 		print(lables)
 
-	while success and tracking_view.shown and stream.isOpened():
-		success, frame = stream.read()
+	while stream.isOpened() and tracking_view.shown:
+		frame = stream.read()
+		if frame is None:
+			quit("Failed to read image.")
 
 		t = time.time()
 
@@ -69,9 +72,11 @@ def main():
 		centroids_dict = tracker.update(objects)
 
 		# show result
-		tracking_view.draw_objects(frame, objects)
-		tracking_view.draw_centroids(frame, centroids_dict)
-		tracking_view.show(frame)
+		tracking_view.set_image(frame)\
+						.draw_objects(objects)\
+						.draw_centroids(centroids_dict)\
+						.show()
+
 	stream.close()
 
 if __name__== "__main__":
