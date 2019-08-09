@@ -69,7 +69,7 @@ class TrackingObject:
 
 	def update_centroid(self, centroid):
 		self.centroid = centroid
-		self.tracking_frame_count += 1 
+		self.tracking_frame_count += 1
 		self.lost_frame_count = 0
 		self.is_lost = False
 		self.footprints.append(centroid)
@@ -145,7 +145,10 @@ class CentroidTracker():
 				del self.tracking_objects[objectID]
 
 	def __ageing_all(self):
-		IDs = self.tracking_objects.keys()
+		# To avoid "RuntimeError: OrderedDict mutated during iteration", copy the dictionary
+		dict_copy = copy.deepcopy(self.tracking_objects)
+		IDs = dict_copy.keys()
+
 		for objectID in IDs:
 			self.__ageing(objectID)
 

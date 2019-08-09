@@ -57,6 +57,7 @@ def main():
 	if config.VERBOSE_LOG:
 		print(lables)
 
+	# try:
 	while stream.isOpened() and tracking_view.shown:
 		frame = stream.read()
 		if frame is None:
@@ -76,8 +77,12 @@ def main():
 						.draw_objects(objects)\
 						.draw_centroids(centroids_dict)\
 						.show()
+	# except Exception as e:
+	# 	print(e)
+
+	tracking_view.save()
 
 	stream.close()
 
 if __name__== "__main__":
-	main()
+		main()

@@ -10,8 +10,10 @@ class TrackingView:
 		self.fps = 0
 		self.last_rendered_sec = int(time.time())
 		self.display_results = True
+
 		self.people_count = 0
 		self.pass_count = 0
+
 		self.width = width
 		self.height = height
 		self.shown = True
@@ -20,15 +22,32 @@ class TrackingView:
 		self.blank_display = True
 		self.blank_image = None
 
-		self.unity_chan = False
+		self.unity_chan = True
 		self.unity_chan_view = UnityChanView()
 
-	def __draw_text(self, image, text, left, bottom, text_color = config.TEXT_COLOR, bgcolor = config.TEXT_BGCOLOR, scale = 0.7):
+		if os.path.exists("pastconunt.txt"):
+			fp = open("pastconunt.txt", "r")
+			content = fp.read()
+			tokens = content.split(",")
+			self.past_people_count = int(tokens[0])
+			self.past_pass_count = int(tokens[1])
+
+			fp.close()
+		else:
+			self.past_people_count = 0
+			self.past_pass_count = 0
+
+	def save(self):
+		fp = open("pastconunt.txt", "w")
+		fp.write(f"{self.people_count + self.past_people_count},{self.pass_count + self.past_pass_count}")
+		fp.close()
+
+	def __draw_text(self, image, text, left, bottom, text_color = config.TEXT_COLOR, bgcolor = config.TEXT_BGCOLOR, scale = 0.7, thickness=2):
 		if self.display_results:
 			margin = 2
 			(label_width, label_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, scale, 1)
 			cv2.rectangle(image, (left, bottom - label_height - margin * 2), (left + label_width + margin * 2, bottom), bgcolor, cv2.FILLED)
-			cv2.putText(image, text, (left + margin, bottom - margin - 1), cv2.FONT_HERSHEY_SIMPLEX, scale, text_color, thickness=2)
+			cv2.putText(image, text, (left + margin, bottom - margin - 1), cv2.FONT_HERSHEY_SIMPLEX, scale, text_color, thickness=thickness)
 
 	def set_image(self, image):
 		self.image = image
@@ -37,11 +56,13 @@ class TrackingView:
 			if self.blank_image is None:
 				self.blank_image = cv2.imread("core/image/blank.png")
 				self.blank_image = cv2.resize(self.blank_image, (self.width, self.height))
+
+				self.blank_image_for_counter = cv2.resize(self.blank_image, (900, 100))
 			self.image = self.blank_image.copy()
 
 		return self
 
-	def draw_objects(self, objects):	
+	def draw_objects(self, objects):
 		if self.display_results:
 			for obj in objects:
 
@@ -130,14 +151,18 @@ class TrackingView:
 			self.frame_count = 0
 		self.frame_count += 1
 
-		self.__draw_text(self.image, f"PEOPLE : {self.people_count}", 5, 20)
-		self.__draw_text(self.image, f"PASS : {self.pass_count}", 5, 40)
+		self.__draw_text(self.image, f"COUNT : {self.people_count + self.past_people_count}", 5, 20)
+		self.__draw_text(self.image, f"PASS : {self.pass_count + self.past_pass_count}", 5, 40)
 		self.__draw_text(self.image, f"FPS : {self.fps}", 5, 60)
+
+		counter_view = self.blank_image_for_counter.copy()
+		self.__draw_text(counter_view, f"COUNT : {self.people_count + self.past_people_count}", 5, 95, scale = 4, text_color = (255, 255, 255), bgcolor = (0, 0, 0), thickness=4)
 
 		# cv2.line(self.image, (config.PASS_COUNT_LEFT_BORDER, 0), (config.PASS_COUNT_LEFT_BORDER, self.height), (255, 0, 0), 2)
 		# cv2.line(self.image, (config.PASS_COUNT_RIGHT_BORDER, 0), (config.PASS_COUNT_RIGHT_BORDER, self.height), (255, 0, 0), 2)
-		
+
 		cv2.imshow("hit q key to exit, c key to show/hide camera image, d key to show/hide display info.", self.image)
+		cv2.imshow("count", counter_view)
 
 		key = cv2.waitKey(1) & 0xFF
 		if key == ord('q'):
@@ -145,7 +170,7 @@ class TrackingView:
 			cv2.destroyAllWindows()
 			print("exit")
 
-		# todo : make display mode. 
+		# todo : make display mode.
 		elif key == ord('c'):
 			self.blank_display = not self.blank_display
 		elif key == ord('d'):

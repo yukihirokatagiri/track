@@ -2,13 +2,13 @@ import os
 import argparse
 
 # defaults
-DEF_MODEL_PATH = "D:/12_ML/07_pretrained_models//ssdlite_mobilenet_v2_coco_2018_05_09.pb"	# pre-trained model file
-DEF_LABEL_PATH = "label/mscoco_label_map.pbtxt"								# label definiction file  
+DEF_MODEL_PATH = "C:/Users/SLSV47/Desktop/0804_demo/07_pretrained_models/ssdlite_mobilenet_v2_coco_2018_05_09.pb"	# pre-trained model file
+DEF_LABEL_PATH = "label/mscoco_label_map.pbtxt"								# label definiction file
 DEF_CONFIDENCE = 0.5
 DEF_CAMERA_ID = 0
 DEF_VERBOSE_LOG = False
 DEF_TARGET_CLASS = 1 # detect people
-DEF_LOST_FRAME = 50
+DEF_LOST_FRAME = 20
 DEF_TRACKING_HISTORY = 10
 
 # argument description
