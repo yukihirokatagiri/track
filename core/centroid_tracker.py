@@ -101,24 +101,24 @@ class TrackingObject:
 
 
 class CentroidTracker():
-    def __init__(self, maxDisappeared=config.LOST_COUNT):
+    def __init__(self, lost_count=config.LOST_COUNT):
         # initialize the next unique object ID along with two ordered
         # dictionaries used to keep track of mapping a given object
         # ID to its centroid and number of consecutive frames it has
         # been marked as "disappeared", respectively
         self.nextObjectID = 1
-        self.tracking_objects = OrderedDict()
+        self.objs = OrderedDict()
 
         # store the number of maximum consecutive frames a given
         # object is allowed to be marked as "disappeared" until we
         # need to deregister the object from tracking
-        self.maxDisappeared = maxDisappeared
+        self.lost_count = lost_count
 
     def __update_centroid(self, objectID, centroid):
-        if objectID in self.tracking_objects:
-            self.tracking_objects[objectID].update_centroid(centroid)
+        if objectID in self.objs:
+            self.objs[objectID].update_centroid(centroid)
         else:
-            self.tracking_objects[objectID] = TrackingObject(centroid)
+            self.objs[objectID] = TrackingObject(centroid)
 
     def __register(self, centroid):
         # when registering an object we use the next available object
@@ -130,35 +130,25 @@ class CentroidTracker():
         for c in centroids:
             self.__register(c)
 
-    # def __deregister(self, objectID):
-    #   # to deregister an object ID we delete the object ID from
-    #   # both of our respective dictionaries
-    #   del self.tracking_objects[objectID] # here
-
     def __ageing(self, objectID):
-        if objectID in self.tracking_objects:
-            self.tracking_objects[objectID].lost_frame_count += 1
-            self.tracking_objects[objectID].is_lost = True
+        if objectID in self.objs:
+            self.objs[objectID].lost_frame_count += 1
+            self.objs[objectID].is_lost = True
 
             # check to see if the number of consecutive
             # frames the object has been marked "disappeared"
             # for warrants deregistering the object
-            if self.tracking_objects[objectID].lost_frame_count > self.maxDisappeared:
-                del self.tracking_objects[objectID]
+            if self.objs[objectID].lost_frame_count > self.lost_count:
+                del self.objs[objectID]
 
     def __ageing_all(self):
-        dict_copy = copy.deepcopy(self.tracking_objects)
+        dict_copy = copy.deepcopy(self.objs)
         IDs = dict_copy.keys()
 
         for objectID in IDs:
             self.__ageing(objectID)
 
-        # Note : Deleting dictionary member during iteration may cause an
-        # error, so do not call like the code below
-        # for objectID in self.tracking_objects.keys():
-        #   self.ageing(objectID)
-
-    def __convert_rects_to_centroids(self, rects):
+    def ___rects_to_centroids(self, rects):
         centroids = []
         for rect in rects:
             centroids.append(Point(
@@ -167,104 +157,64 @@ class CentroidTracker():
             ))
         return centroids
 
-    def update(self, object_bounds_in_the_latest_frame):
+    def update(self, rects):
         # If we got no new objects in the frame, just run ageing.
-        if len(object_bounds_in_the_latest_frame) == 0:
+        if len(rects) == 0:
             self.__ageing_all()
         else:
-            input_centroids = self.__convert_rects_to_centroids(
-                object_bounds_in_the_latest_frame
-            )
+            input_centroids = self.___rects_to_centroids(rects)
 
-            # if we are currently not tracking any objects take the input
-            # centroids and register each of them
-            if len(self.tracking_objects) == 0:
+            # if we have no tracking objects, register all
+            if len(self.objs) == 0:
                 self.__register_all(input_centroids)
             else:
-                # grab the set of object IDs and corresponding centroids
-                objectIDs = list(self.tracking_objects.keys())
+                tracking_ids = list(self.objs.keys())
 
-                tracking_centroids_tupple = []
-                for obj in self.tracking_objects.values():
-                    tracking_centroids_tupple.append(
+                tracking_centroids = []
+                for obj in self.objs.values():
+                    tracking_centroids.append(
                         (obj.centroid.x, obj.centroid.y)
                     )
 
                 input_centroids_tupple = []
                 for c in input_centroids:
-                    input_centroids_tupple.append((c.x, c.y))
+                    input_centroids_tupple.append(
+                        (c.x, c.y)
+                    )
 
-                # compute the distance between each pair of object
-                # centroids and input centroids, respectively -- our
-                # goal will be to match an input centroid to an existing
-                # object centroid
                 dist_matrix = dist.cdist(
-                    np.array(tracking_centroids_tupple),
+                    np.array(tracking_centroids),
                     input_centroids_tupple
                 )
 
-                # in order to perform this matching, we must (1) find the
-                # smallest value in each row and then (2) sort the row
-                # indexes based on their minimum values so that the row
-                # with the smallest value as at the *front* of the index
-                # list
-                rows = dist_matrix.min(axis=1).argsort()
+                tracking_ids_by_dist = dist_matrix.min(axis=1).argsort()
+                input_ids_by_dist = dist_matrix.argmin(axis=1)[tracking_ids_by_dist]
+                tracking_ids_checked = set()
+                input_ids_checked = set()
 
-                # next, we perform a similar process on the columns by
-                # finding the smallest value in each column and then
-                # sorting using the previously computed row index list
-                cols = dist_matrix.argmin(axis=1)[rows]
-
-                # in order to determine if we need to update, register,
-                # or deregister an object we need to keep track of which
-                # of the rows and column indexes we have already examined
-                usedRows = set()
-                usedCols = set()
-
-                # loop over the combination of the (row, column) index
-                # tuples
-                for (row, col) in zip(rows, cols):
-                    # if we have already examined either the row or
-                    # column value before, ignore it
-                    if row in usedRows or col in usedCols:
+                for (tracking_id, in_id) in zip(tracking_ids_by_dist,
+                                                input_ids_by_dist):
+                    if tracking_id in tracking_ids_checked or in_id in input_ids_checked:
                         continue
 
-                    # otherwise, grab the object ID for the current row,
-                    # set its new centroid, and reset the disappeared
-                    # counter
-                    objectID = objectIDs[row]
-                    self.__update_centroid(objectID, input_centroids[col])
+                    objectID = tracking_ids[tracking_id]
+                    self.__update_centroid(objectID, input_centroids[in_id])
 
-                    # indicate that we have examined each of the row and
-                    # column indexes, respectively
-                    usedRows.add(row)
-                    usedCols.add(col)
+                    tracking_ids_checked.add(tracking_id)
+                    input_ids_checked.add(in_id)
 
-                # compute both the row and column index we have NOT yet
-                # examined
-                unusedRows = set(
+                to_age = set(
                     range(0, dist_matrix.shape[0])
-                ).difference(usedRows)
-                unusedCols = set(
+                ).difference(tracking_ids_checked)
+
+                for row in to_age:
+                    self.__ageing(tracking_ids[row])
+
+                to_register = set(
                     range(0, dist_matrix.shape[1])
-                ).difference(usedCols)
+                ).difference(input_ids_checked)
 
-                # in the event that the number of object centroids is
-                # equal or greater than the number of input centroids
-                # we need to check and see if some of these objects have
-                # potentially disappeared
-                if dist_matrix.shape[0] >= dist_matrix.shape[1]:
-                    # loop over the unused row indexes
-                    for row in unusedRows:
-                        # grab the object ID for the corresponding and ageing
-                        self.__ageing(objectIDs[row])
+                for col in to_register:
+                    self.__register(input_centroids[col])
 
-                # otherwise, if the number of input centroids is greater
-                # than the number of existing object centroids we need to
-                # register each new input centroid as a trackable object
-                else:
-                    for col in unusedCols:
-                        self.__register(input_centroids[col])
-
-        # return the set of trackable objects
-        return self.tracking_objects
+        return self.objs
