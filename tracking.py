@@ -1,88 +1,85 @@
 import sys
 import config
 import time
-import cv2
-
-print(f"Loading {config.MODEL_PATH}")
 
 # tensorflow object detection API
 # Check your PYTHONPATH if failed to import this.
 from object_detection.utils import label_map_util
 
-sys.path.insert(0, "core")
-from detection_graph import Detector
-from centroid_tracker import CentroidTracker
-from centroid_tracker import TrackingObject
-from camera import *
-from tracking_view import TrackingView
+from core.centroid_tracker import CentroidTracker
+from core.detection_graph import Detector
+from core.camera import Camera, FileStream
+from core.tracking_view import TrackingView
+print(f"Loading {config.MODEL_PATH}")
+
 
 def get_image_stream():
-	if not config.INPUT_FILE == "":
-		stream = FileStream()
-		print("FileStream")
-	else:
-		stream = Camera()
-		print(f"Camera {config.CAMERA_ID}")
+    if not config.INPUT_FILE == "":
+        stream = FileStream()
+        print("FileStream")
+    else:
+        stream = Camera()
+        print(f"Camera {config.CAMERA_ID}")
 
-	return stream
+    return stream
+
 
 def quit(msg):
-	print(msg)
-	sys.exit()
+    print(msg)
+    sys.exit()
+
 
 def main():
-	stream = get_image_stream()
-	stream.open()
-	frame = stream.read()
-	if frame is None:
-		quit("Failed to load stream.")
+    stream = get_image_stream()
+    stream.open()
+    frame = stream.read()
+    if frame is None:
+        quit("Failed to load stream.")
 
-	height, width, depth = frame.shape
+    height, width, depth = frame.shape
 
-	if config.VERBOSE_LOG:
-		print(f"Width : {width}, Height : {height}")
+    if config.VERBOSE_LOG:
+        print(f"Width : {width}, Height : {height}")
 
-	tracking_view = TrackingView(width, height)
+    tracking_view = TrackingView(width, height)
 
-	detector = Detector()
+    detector = Detector()
 
-	loaded = detector.load(config.MODEL_PATH)
-	if not loaded:
-		quit(f"Failed to load model : {config.MODEL_PATH}")
+    loaded = detector.load(config.MODEL_PATH)
+    if not loaded:
+        quit(f"Failed to load model : {config.MODEL_PATH}")
 
-	tracker = CentroidTracker()
+    tracker = CentroidTracker()
 
-	lables = label_map_util.create_category_index_from_labelmap(config.LABEL_PATH, use_display_name=True)
+    lables = label_map_util.create_category_index_from_labelmap(config.LABEL_PATH, use_display_name=True)
 
-	if config.VERBOSE_LOG:
-		print(lables)
+    if config.VERBOSE_LOG:
+        print(lables)
 
-	# try:
-	while stream.isOpened() and tracking_view.shown:
-		frame = stream.read()
-		if frame is None:
-			quit("Failed to read image.")
+    while stream.isOpened() and tracking_view.shown:
+        frame = stream.read()
+        if frame is None:
+            quit("Failed to read image.")
 
-		t = time.time()
+        t = time.time()
 
-		objects = detector.detect(frame)
+        objects = detector.detect(frame)
 
-		if config.VERBOSE_LOG:
-			print(f"detect : {time.time() - t:.2f}")
+        if config.VERBOSE_LOG:
+            print(f"detect : {time.time() - t:.2f}")
 
-		centroids_dict = tracker.update(objects)
+        centroids_dict = tracker.update(objects)
 
-		# show result
-		tracking_view.set_image(frame)\
-						.draw_objects(objects)\
-						.draw_centroids(centroids_dict)\
-						.show()
-	# except Exception as e:
-	# 	print(e)
+        # show result
+        tracking_view.set_image(frame)\
+                     .draw_objects(objects)\
+                     .draw_centroids(centroids_dict)\
+                     .show()
 
-	tracking_view.save()
+    tracking_view.save()
 
-	stream.close()
+    stream.close()
 
-if __name__== "__main__":
-		main()
+
+if __name__ == "__main__":
+    main()

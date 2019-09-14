@@ -1,13 +1,12 @@
-import os
 import argparse
 
 # defaults
-DEF_MODEL_PATH = "C:/Users/SLSV47/Desktop/0804_demo/07_pretrained_models/ssdlite_mobilenet_v2_coco_2018_05_09.pb"	# pre-trained model file
-DEF_LABEL_PATH = "label/mscoco_label_map.pbtxt"								# label definiction file
+DEF_MODEL_PATH = "ssdlite_mobilenet_v2_coco_2018_05_09.pb"
+DEF_LABEL_PATH = "label/mscoco_label_map.pbtxt"
 DEF_CONFIDENCE = 0.5
 DEF_CAMERA_ID = 0
 DEF_VERBOSE_LOG = False
-DEF_TARGET_CLASS = 1 # detect people
+DEF_TARGET_CLASS = 1  # detect people
 DEF_LOST_FRAME = 20
 DEF_TRACKING_HISTORY = 10
 
@@ -52,58 +51,13 @@ PASS_COUNT_RIGHT_BORDER = 390
 
 # debug print
 if VERBOSE_LOG:
-	print("Config")
-	print(f"\tMODEL_PATH : {MODEL_PATH}")
-	print(f"\tLABEL_PATH : {LABEL_PATH}")
-	print(f"\tCONFIDENCE : {CONFIDENCE}")
-	print(f"\tCAMERA_ID : {CAMERA_ID}")
-	print(f"\tVERBOSE_LOG : {VERBOSE_LOG}")
-	print(f"\tTARGET_CLASS : {TARGET_CLASS}")
-	print(f"\tINPUT_FILE : {INPUT_FILE}")
-	# print(f"\tRUN_ALL : {RUN_ALL}")
-	print(f"\tLOST_COUNT : {LOST_COUNT}")
-	print(f"\tTRACKING_HISTORY : {TRACKING_HISTORY}")
-
-# pretrained_models = {
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_inception_resnet_v2_atrous_lowproposals_oid_2018_01_28.pb" : "label/oid_v4_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_inception_v2_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_nas_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_resnet101_ava_v2.1_2018_04_30.pb" : "label/ava_label_map_v2.1.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_resnet101_coco_11_06_2017.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_resnet101_kitti_2018_01_28.pb" : "label/kitti_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_resnet101_lowproposals_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_resnet50_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//faster_rcnn_resnet50_lowproposals_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//mask_rcnn_inception_resnet_v2_atrous_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//mask_rcnn_inception_v2_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//mask_rcnn_resnet50_atrous_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-# 	"D:/12_ML/07_pretrained_models//rfcn_resnet101_coco_11_06_2017.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 15 fps
-# 	"D:/12_ML/07_pretrained_models//ssdlite_mobilenet_v2_coco_2018_05_09.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 13 fps
-# 	"D:/12_ML/07_pretrained_models//ssd_inception_v2_coco_11_06_2017.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 15 fps
-# 	"D:/12_ML/07_pretrained_models//ssd_mobilenet_v1_0.75_depth_300x300_coco14_sync_2018_07_03.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 11 fps
-# 	"D:/12_ML/07_pretrained_models//ssd_mobilenet_v1_coco_2017_11_17.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 15 fps
-# 	"D:/12_ML/07_pretrained_models//ssd_mobilenet_v1_coco_2018_01_28.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 8 fps
-# 	"D:/12_ML/07_pretrained_models//ssd_mobilenet_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 14 fps
-# 	"D:/12_ML/07_pretrained_models//ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 14 fps
-# 	"D:/12_ML/07_pretrained_models//ssd_mobilenet_v2_coco_2018_03_29.pb" : "label/mscoco_label_map.pbtxt",
-
-# 	# 7 fps
-# 	"D:/12_ML/07_pretrained_models//ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.pb" : "label/mscoco_label_map.pbtxt",
-# }
+    print("Config")
+    print(f"\tMODEL_PATH : {MODEL_PATH}")
+    print(f"\tLABEL_PATH : {LABEL_PATH}")
+    print(f"\tCONFIDENCE : {CONFIDENCE}")
+    print(f"\tCAMERA_ID : {CAMERA_ID}")
+    print(f"\tVERBOSE_LOG : {VERBOSE_LOG}")
+    print(f"\tTARGET_CLASS : {TARGET_CLASS}")
+    print(f"\tINPUT_FILE : {INPUT_FILE}")
+    print(f"\tLOST_COUNT : {LOST_COUNT}")
+    print(f"\tTRACKING_HISTORY : {TRACKING_HISTORY}")
