@@ -54,7 +54,7 @@ class UnityChanRenderer:
     #     self.rendering_count += 1
 
     def render(self, base_image, x, y, unity_chan_width, unity_chan_height):
-        print(f"rendering count : {self.rendering_count}")
+        # print(f"rendering count : {self.rendering_count}")
 
         idx = self.get_image_index()
         base_height, base_width, base_depth = base_image.shape

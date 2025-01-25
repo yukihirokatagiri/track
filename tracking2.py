@@ -57,6 +57,7 @@ if __name__ == '__main__':
             break
 
         # Predict with YOLO
+        # https://docs.ultralytics.com/modes/predict/#inference-arguments
         results = model.predict(source=frame, conf=0.5, save=False, show=False)
         person_boxes = [box for box in results[0].boxes if int(box.cls) == person_id]
 
