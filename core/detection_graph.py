@@ -31,13 +31,13 @@ class Detector:
 
             # GraphDef can load serialzied graph, such as pretrained model data.
             # We import specified graph here with tf.import_graph_def function.
-            graph_def = tf.GraphDef()
-            with tf.gfile.GFile(graph_file_path, 'rb') as fid:
+            graph_def = tf.compat.v1.GraphDef()
+            with tf.io.gfile.GFile(graph_file_path, 'rb') as fid:
                 serialized_graph = fid.read()
                 graph_def.ParseFromString(serialized_graph)
                 tf.import_graph_def(graph_def, name='')
 
-            self.session = tf.Session(graph=detection_graph) 
+            self.session = tf.compat.v1.Session(graph=detection_graph) 
             self.image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
             self.detection_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
             self.detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')

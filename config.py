@@ -1,8 +1,8 @@
 import argparse
 
 # defaults
-DEF_MODEL_PATH = "ssdlite_mobilenet_v2_coco_2018_05_09.pb"
-DEF_LABEL_PATH = "label/mscoco_label_map.pbtxt"
+DEF_MODEL_PATH = "model/ssdlite_mobilenet_v2_coco_2018_05_09.pb"
+DEF_LABEL_PATH = "model/mscoco_label_map.pbtxt"
 DEF_CONFIDENCE = 0.5
 DEF_CAMERA_ID = 0
 DEF_VERBOSE_LOG = False

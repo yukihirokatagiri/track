@@ -51,7 +51,9 @@ def main():
 
     tracker = CentroidTracker()
 
-    lables = label_map_util.create_category_index_from_labelmap(config.LABEL_PATH, use_display_name=True)
+    lables = label_map_util.create_category_index_from_labelmap(
+                config.LABEL_PATH, use_display_name=True
+            )
 
     if config.VERBOSE_LOG:
         print(lables)

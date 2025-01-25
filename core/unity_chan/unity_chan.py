@@ -25,12 +25,38 @@ class UnityChanRenderer:
     def get_image_index(self):
         return self.rendering_count % len(self.unity_chan_image)
 
-    def render(self, base_image, x, y, unity_chan_width, unity_chan_height):
+    # def render(self, base_image, x, y, unity_chan_width, unity_chan_height):
 
-        # print(f"rendering count : {self.rendering_count}")
+    #     # print(f"rendering count : {self.rendering_count}")
+
+    #     idx = self.get_image_index()
+
+    #     base_height, base_width, base_depth = base_image.shape
+
+    #     xx = x - int(unity_chan_width / 2)
+    #     if xx < 0:
+    #         xx = 0
+    #     if xx + unity_chan_width > base_width:
+    #         xx -= xx + unity_chan_width - base_width
+
+    #     yy = y - int(unity_chan_height / 2)
+    #     if yy < 0:
+    #         yy = 0
+    #     if yy + unity_chan_height > base_height:
+    #         yy -= yy + unity_chan_height - base_height
+
+    #     resized = cv2.resize(
+    #         self.unity_chan_image[idx],
+    #         (unity_chan_width, unity_chan_height)
+    #     )
+    #     base_image[yy:yy+unity_chan_height, xx:xx+unity_chan_width] = resized
+
+    #     self.rendering_count += 1
+
+    def render(self, base_image, x, y, unity_chan_width, unity_chan_height):
+        print(f"rendering count : {self.rendering_count}")
 
         idx = self.get_image_index()
-
         base_height, base_width, base_depth = base_image.shape
 
         xx = x - int(unity_chan_width / 2)
@@ -45,14 +71,25 @@ class UnityChanRenderer:
         if yy + unity_chan_height > base_height:
             yy -= yy + unity_chan_height - base_height
 
+        # Adjust the height and width to fit within the base image
+        cropped_height = min(unity_chan_height, base_height - yy)
+        cropped_width = min(unity_chan_width, base_width - xx)
+
+        # Resize the image to the adjusted dimensions
         resized = cv2.resize(
             self.unity_chan_image[idx],
-            (unity_chan_width, unity_chan_height)
+            (cropped_width, cropped_height)
         )
-        base_image[yy:yy+unity_chan_height, xx:xx+unity_chan_width] = resized
+
+        try:
+            # Only replace the portion that fits within the base image
+            base_image[yy:yy+cropped_height, xx:xx+cropped_width] = resized
+        except Exception as e:
+            print(f"Error: {e}")
+            print(f"yy: {yy}, yy+cropped_height: {yy+cropped_height}, xx: {xx}, xx+cropped_width: {xx+cropped_width}")
+            print(f"x: {x}, y: {y}, unity_chan_width: {unity_chan_width}, unity_chan_height: {unity_chan_height}")
 
         self.rendering_count += 1
-
 
 class UnityChanRenderer_Stand(UnityChanRenderer):
     def __init__(self):
